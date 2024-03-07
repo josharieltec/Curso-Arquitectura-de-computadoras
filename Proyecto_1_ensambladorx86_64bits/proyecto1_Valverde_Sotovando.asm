@@ -4,9 +4,9 @@ section .data
     lineSize equ 128 ; Tamaño máximo de una línea
 
 section .bss
-    dataPointer resd 1 
-    fileHandle resd 1 
-    noteValue resd 1   
+    dataPointer resd 1 ; Puntero para recorrer el área de memoria donde se almacenarán los datos
+    fileHandle resd 1 ; Descriptor de archivo
+    noteValue resd 1   ; Valor entero de la nota
 
 section .text
     global _start
@@ -34,47 +34,13 @@ read_loop:
     ; Copiar la línea leída a la memoria
     mov edi, buffer
     mov esi, dataPointer
-    mov ecx, eax 
+    mov ecx, eax ; Longitud de la línea leída
+    cmp ecx, lineSize  ; Verificar si la línea excede el tamaño del búfer
+    jae buffer_overflow
     rep movsb
 
-    ; Encontrar la posición de "nota:" en la línea
-    mov esi, buffer
-    mov ecx, eax
-    mov edi, 0
-find_note:
-    lodsb
-    cmp al, ':' ; Buscar ":" en la línea
-    jne find_note
-
-    ; Asegurarse de que los siguientes caracteres sean " nota:"
-    mov edi, esi
-    mov ecx, 7 ; Longitud de ": nota:"
-    repe cmpsb
-    jne find_note
-
-    ; Encontrar la posición del valor de la nota
-    ; Mover el puntero al inicio del valor de la nota
-    mov edi, esi
-    add edi, 7 ; Avanzar al final de ": nota:"
-    jmp read_note_value
-
-read_note_value:
-    ; Lee el valor de la nota y conviértelo a entero
-    xor ebx, ebx ; Limpiar ebx para almacenar el valor de la nota
-read_digit:
-    lodsb
-    cmp al, 0x30 ; Comprueba si es un dígito
-    jb end_read_note_value ; Sale si no es un dígito
-    cmp al, 0x39 ; Comprueba si es un dígito
-    ja end_read_note_value ; Sale si no es un dígito
-    sub al, 0x30 ; Convierte de ASCII a valor numérico
-    imul ebx, ebx, 10 ; Multiplica el valor actual por 10
-    add ebx, eax ; Añade el nuevo dígito al valor de la nota
-    jmp read_digit
-
-end_read_note_value:
-    ; Guarda el valor de la nota
-    mov dword [noteValue], ebx
+    ; Asegurar que la línea copiada esté terminada con un byte nulo
+    mov byte [edi], 0
 
     ; Imprimir la línea en pantalla
     mov eax, 4      ; sys_write
@@ -88,6 +54,10 @@ end_read_note_value:
     mov dword [dataPointer], eax
 
     jmp read_loop
+
+buffer_overflow:
+    ; Manejar el desbordamiento del búfer (puedes imprimir un mensaje y salir o tomar la acción apropiada)
+    jmp end_read_loop
 
 end_read_loop:
     ; Cerrar el archivo
