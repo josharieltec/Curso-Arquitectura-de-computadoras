@@ -1,5 +1,5 @@
 section .data
-    filename db 'input.txt', 0
+    filename db 'ruta_datos.txt', 0   ; ESTA LINEA SE DEBE CAMBIAR POR Ruta_datos
     buffer   db 128 ; Búfer para leer cada línea del archivo
     lineSize equ 128 ; Tamaño máximo de una línea
 
@@ -13,9 +13,9 @@ section .text
 
 _start:
     ; Abrir el archivo
-    mov eax, 5          ; sys_open
-    mov ebx, filename   ; Dirección del nombre del archivo
-    mov ecx, 0          ; Modo de apertura (O_RDONLY)
+    mov eax, 5    ; syscall      
+    mov ebx, filename   ; Quiza deba cambiar esto por Ruta_datos
+    mov ecx, 0          
     int 80h
     mov dword [fileHandle], eax ; Guardar el descriptor de archivo
 
@@ -55,7 +55,7 @@ read_loop:
 
     jmp read_loop
 
-buffer_overflow:
+buffer_overflow:     ;---------------------------------AQUI NO HAY NADA-----------------------
     ; Manejar el desbordamiento del búfer (puedes imprimir un mensaje y salir o tomar la acción apropiada)
     jmp end_read_loop
 
